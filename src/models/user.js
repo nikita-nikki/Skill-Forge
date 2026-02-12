@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema(
             type: String,
             required: true,
             unique: true,
-            tirm: ture
+            trim: true,
+            lowercase: true
         },
         email: {
             type: String,
@@ -17,17 +18,20 @@ const userSchema = new mongoose.Schema(
             lowercase: true
         },
         password: {
-            type: password,
+            type: String,
             required: true,
-            select: false
         },
         role: {
             type: String,
-            enum: [ "admin", "learner", "mentor"]
+            enum: [ "admin", "learner", "mentor"],
+            default: "learner"
         },
         isActive: {
             type: Boolean,
             default: true
+        },
+        refreshToken: {
+            type: String
         }
 
     },
@@ -36,9 +40,9 @@ const userSchema = new mongoose.Schema(
 
 
 userSchema.pre("save" , async function (next) {
-    if(!this.isModified("password"))return next();
+    if(!this.isModified("password"))return next;
     this.password = await bcrypt.hash(this.password,10);
-    next();
+    next;
 });
 
 userSchema.methods.passwordCompare = async function (enteredPassword) {
