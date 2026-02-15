@@ -12,11 +12,13 @@ app.use(cookieParser())
 import healthcheckRouter from "./routes/healthcheck.route.js"
 import userRouter from "./routes/user.route.js"
 import testRoleRouter from "./routes/testRole.route.js"
+import trackRouter from "./routes/track.route.js"
 
 //routes declaration
 app.use("/api/v1/healthcheck", healthcheckRouter)
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/test-role", testRoleRouter)
+app.use("/api/v1/track", trackRouter)
 
 
 
