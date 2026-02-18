@@ -13,12 +13,16 @@ import healthcheckRouter from "./routes/healthcheck.route.js"
 import userRouter from "./routes/user.route.js"
 import testRoleRouter from "./routes/testRole.route.js"
 import trackRouter from "./routes/track.route.js"
+import moduleRouter from "./routes/module.route.js"
+import taskRouter from "./routes/task.route.js"
 
 //routes declaration
 app.use("/api/v1/healthcheck", healthcheckRouter)
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/test-role", testRoleRouter)
-app.use("/api/v1/track", trackRouter)
+app.use("/api/v1/tracks", trackRouter)
+app.use("/api/v1/tracks", moduleRouter)
+app.use("/api/v1/modules", taskRouter)
 
 
 
