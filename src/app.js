@@ -15,6 +15,7 @@ import testRoleRouter from "./routes/testRole.route.js"
 import trackRouter from "./routes/track.route.js"
 import moduleRouter from "./routes/module.route.js"
 import taskRouter from "./routes/task.route.js"
+import submissionRouter from "./routes/submission.route.js"
 
 //routes declaration
 app.use("/api/v1/healthcheck", healthcheckRouter)
@@ -23,6 +24,7 @@ app.use("/api/v1/test-role", testRoleRouter)
 app.use("/api/v1/tracks", trackRouter)
 app.use("/api/v1/tracks", moduleRouter)
 app.use("/api/v1/modules", taskRouter)
+app.use("/api/v1/tasks", submissionRouter)
 
 
 
