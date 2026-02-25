@@ -22,8 +22,12 @@ const submissionSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["pending", "evaluated"],
+            enum: ["pending", "processing", "evaluated", "failed"],
             default: "pending"
+        },
+        retryCount: {
+            type: Number,
+            default: 0
         }
     },
     { timestamps: true}
