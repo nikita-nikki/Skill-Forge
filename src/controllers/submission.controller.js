@@ -2,6 +2,7 @@ import { Submission } from "../models/submission.js";
 import { Task } from "../models/task.js";
 import { Module } from "../models/module.js";
 import { Track } from "../models/track.js";
+import { Enrollment } from "../models/enrollment.js";
 
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -41,6 +42,14 @@ const submitTask  = asyncHandler( async(req, res) => {
     if(!track.isPublished){
         throw new ApiError(400, "Cannot submit to unpublished track.")
     } 
+
+    const enrollment = await Enrollment.findOne({
+        user: req.user._id,
+        track: track._id
+    });
+    if(!enrollment){
+        throw new ApiError(403, "You must enroll in this track to submit tasks.")
+    }
 
     const attempCount = await Submission.countDocuments({
         user: req.user._id,
