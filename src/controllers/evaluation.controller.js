@@ -3,6 +3,7 @@ import { Task } from "../models/task.js";
 import { Evaluation } from "../models/evaluation.js";
 import { Track } from "../models/track.js";
 import { Module } from "../models/module.js";
+import { Enrollment } from "../models/enrollment.js";
 
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -109,6 +110,31 @@ const simulateEvaluation = async(submissionId) => {
 
             submission.status = "evaluated";
             await submission.save();
+
+            const module = await Module.findById(task.module)
+            if(!module) return;
+
+            const track = await Track.findById(module.track)
+            if(!track) return;
+
+            const moduleIds = await Module.find({ track: track._id }).distinct("_id")
+
+            const totalTasks = await Task.countDocuments({
+                module: {$in: moduleIds}
+            });
+
+            const completedTasks = await Submission.distinct( "task", {
+                user: submission.user,
+                status: "evaluated"
+            })
+
+            const progress = totalTasks === 0 ? 0 : Math.floor((completedTasks.length / totalTasks) * 100 );
+
+            await Enrollment.findOneAndUpdate(
+                { user: submission.user, track: track._id},
+                { progressPercentage: progress }
+            );
+
 
         } catch (error) {
             console.log("Async evaluation failed: ", error);
