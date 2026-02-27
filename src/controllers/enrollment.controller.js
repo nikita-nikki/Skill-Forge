@@ -21,7 +21,7 @@ const enrollInTrack = asyncHandler( async(req, res) => {
         track: trackId
     })
     if(existing){
-        throw new ApiError(400, "Already enrolled in this tracj.")
+        throw new ApiError(400, "Already enrolled in this track.")
     }
 
     const enrollment  = await Enrollment.create({

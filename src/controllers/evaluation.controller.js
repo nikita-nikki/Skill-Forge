@@ -130,9 +130,14 @@ const simulateEvaluation = async(submissionId) => {
 
             const progress = totalTasks === 0 ? 0 : Math.floor((completedTasks.length / totalTasks) * 100 );
 
+            const newStatus = progress === 100 ? "completed" : "active";
+
             await Enrollment.findOneAndUpdate(
                 { user: submission.user, track: track._id},
-                { progressPercentage: progress }
+                { 
+                    progressPercentage: progress,
+                    status: newStatus
+                }
             );
 
 
