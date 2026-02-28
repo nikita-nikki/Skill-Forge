@@ -40,6 +40,6 @@ const taskSchema = mongoose.Schema(
 )
 
 
-taskSchema.index({ module:1, oder: 1}, { unique: true});
+taskSchema.index({ module:1, order: 1}, { unique: true});
 
 export const Task = mongoose.model("Task", taskSchema);
