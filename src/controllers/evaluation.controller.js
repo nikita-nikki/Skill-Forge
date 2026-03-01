@@ -41,6 +41,7 @@ const evaluateSubmission = asyncHandler( async(req, res) => {
         submissionId
     });
 
+    console.log("Job added to queue:", submissionId);
     // simulateEvaluation(submissionId);
 
     return res

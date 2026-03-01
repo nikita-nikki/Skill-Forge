@@ -1,5 +1,9 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { Worker } from "bullmq";
 import IORedis from "ioredis";
+import { geminiModel } from "../config/gemini.js";
 
 import { Submission } from "../models/submission.js";
 import { Task } from "../models/task.js";
@@ -7,15 +11,21 @@ import { Evaluation } from "../models/evaluation.js";
 import { Module } from "../models/module.js";
 import { Track } from "../models/track.js";
 import { Enrollment } from "../models/enrollment.js";
+import connectDB from "../config/db.js";
+
+await connectDB();
 
 const connection = new IORedis({
   maxRetriesPerRequest: null,
 });
 
+
 const evaluationWorker = new Worker(
     "evaluationQueue",
     async (job) => {
         const { submissionId } = job.data;
+
+        console.log("Worker started job:", submissionId);
 
         const submission = await Submission.findById(submissionId)
         if(!submission) return;
@@ -23,25 +33,91 @@ const evaluationWorker = new Worker(
         const task = await Task.findById(submission.task)
         if(!task) return;
 
+        // const rubric = task.rubric || {};
+
+        // const breakdown = {
+        //     clarity: Math.floor(Math.random() * ((rubric.clarity || 0) + 1)),
+        //     correctness: Math.floor(Math.random() * ((rubric.correctness || 0) + 1)),
+        //     examples: Math.floor(Math.random() * ((rubric.examples || 0) + 1)),
+        // };
+
+        // const totalScore = breakdown.clarity + breakdown.correctness + breakdown.examples;
+
+        // await Evaluation.create({
+        //     submission: submission._id,
+        //     score: totalScore,
+        //     breakdown,
+        //     feedback: "AI simulated via worker."
+        // });
+
+        console.log("Gemini key:", process.env.GEMINI_API_KEY);
+
         const rubric = task.rubric || {};
 
-        const breakdown = {
-            clarity: Math.floor(Math.random() * ((rubric.clarity || 0) + 1)),
-            correctness: Math.floor(Math.random() * ((rubric.correctness || 0) + 1)),
-            examples: Math.floor(Math.random() * ((rubric.examples || 0) + 1)),
-        };
+        try {
+            const prompt = `
+            You are an evaluator.
+            Evaluate the student's answer strictly using the rubric below.
+            Return ONLY valid JSON.
+            
+            Question:
+            ${task.question}
 
-        const totalScore = breakdown.clarity + breakdown.correctness + breakdown.examples;
+            Student Answer:
+            ${submission.answer}
 
-        await Evaluation.create({
-            submission: submission._id,
-            score: totalScore,
-            breakdown,
-            feedback: "AI simulated via worker."
-        });
+            Rubric:
+            Clarity: ${rubric.clarity}
+            Correctness: ${rubric.correctness}
+            Examples: ${rubric.examples}
 
-        submission.status = "evaluated"
-        await submission.save();
+            Return JSON format:
+            {
+              "clarity": number,
+              "correctness": number,
+              "examples": number,
+              "feedback": string
+            }
+            `;
+
+            const result = await geminiModel.generateContent(prompt);
+
+            const text = result.response.text();
+
+            const cleaned = text.replace(/```json|```/g, "").trim();
+
+            const parsed = JSON.parse(cleaned);
+
+            const breakdown = {
+                clarity: parsed.clarity,
+                correctness: parsed.correctness,
+                examples: parsed.examples,
+            };
+
+            const totalScore = breakdown.clarity + breakdown.correctness + breakdown.examples;
+
+            await Evaluation.create({
+                submission: submission._id,
+                score: totalScore,
+                breakdown,
+                feedback: parsed.feedback,
+            });
+
+            submission.status = "evaluated";
+            await submission.save();
+
+        } catch (error) {
+            console.log("Gemini evaluation failed: ", error);
+            
+            submission.status = "failed"
+            submission.retryCount +=1
+            await submission.save();
+
+            throw error; 
+        }
+
+        // submission.status = "evaluated"
+        // await submission.save();
         
         const module = await Module.findById(task.module)
         if(!module) return;
