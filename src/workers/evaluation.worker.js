@@ -50,7 +50,7 @@ const evaluationWorker = new Worker(
         //     feedback: "AI simulated via worker."
         // });
 
-        console.log("Gemini key:", process.env.GEMINI_API_KEY);
+        
 
         const rubric = task.rubric || {};
 
@@ -79,8 +79,11 @@ const evaluationWorker = new Worker(
               "feedback": string
             }
             `;
-
+            //console.log("Promt is about to go to gemini model");
+            
             const result = await geminiModel.generateContent(prompt);
+            //console.log("Prompt is given to the gemini and result is :", result);
+            
 
             const text = result.response.text();
 
