@@ -197,16 +197,23 @@ const retryEvaluation = asyncHandler( async(req, res) => {
     //submission.retryCount += 1;
     await submission.save();
 
-    simulateEvaluation(submissionId);
+    //simulateEvaluation(submissionId);
+
+    // Push back into BullMQ queue
+    await evaluationQueue.add("evaluateSubmission", {
+        submissionId: submission._id.toString(),
+    });
 
     return res
       .status(200)
       .json( new ApiResponse(
         200,
         null,
-        "Retry started."
+        "AI evaluation retry queued successfully."
       ))
 })
+
+
 export {
     evaluateSubmission,
     getEvaluationBySubmission,
