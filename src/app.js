@@ -4,8 +4,12 @@ import cookieParser from "cookie-parser";
 
 const app = express()
 
-app.use(express.json({limit: "16kb"}))
-app.use(express.urlencoded({extended: true, limit: "16kb"}))
+app.use(cors({
+    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    credentials: true,
+}))
+app.use(express.json({ limit: "16kb" }))
+app.use(express.urlencoded({ extended: true, limit: "16kb" }))
 app.use(cookieParser())
 
 //routes import
@@ -31,7 +35,7 @@ app.use("/api/v1/modules", taskRouter)
 app.use("/api/v1/tasks", submissionRouter)
 app.use("/api/v1/submissions", evaluationRouter)
 app.use("/api/v1/tracks", enrollmentRouter)
-app.use("/api/v1/mentor", analyticsRouter)
+app.use("/api/v1/analytics", analyticsRouter)
 
 
-export {app}
+export { app }

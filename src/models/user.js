@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema(
         },
         role: {
             type: String,
-            enum: [ "admin", "learner", "mentor"],
+            enum: ["admin", "learner", "mentor"],
             default: "learner"
         },
         isActive: {
@@ -32,16 +32,21 @@ const userSchema = new mongoose.Schema(
         },
         refreshToken: {
             type: String
+        },
+        mentorApplicationStatus: {
+            type: String,
+            enum: ["none", "pending", "approved", "rejected"],
+            default: "none"
         }
 
     },
-    { timestamp: true}
+    { timestamp: true }
 );
 
 
-userSchema.pre("save" , async function (next) {
-    if(!this.isModified("password"))return next;
-    this.password = await bcrypt.hash(this.password,10);
+userSchema.pre("save", async function (next) {
+    if (!this.isModified("password")) return next;
+    this.password = await bcrypt.hash(this.password, 10);
     next;
 });
 
@@ -49,7 +54,7 @@ userSchema.methods.passwordCompare = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-userSchema.methods.generateAccessToken = function(){
+userSchema.methods.generateAccessToken = function () {
     return jwt.sign(
         {
             _id: this._id
@@ -61,7 +66,7 @@ userSchema.methods.generateAccessToken = function(){
     )
 }
 
-userSchema.methods.generateRefreshToken = function(){
+userSchema.methods.generateRefreshToken = function () {
     return jwt.sign(
         {
             _id: this._id

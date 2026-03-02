@@ -7,16 +7,16 @@ import { ApiError } from "../utils/ApiError.js";
 
 import { User } from "../models/user.js";
 
-const generateAccessAndRefreshToken = async(userId) => {
-    
+const generateAccessAndRefreshToken = async (userId) => {
+
     try {
         const user = await User.findOne(userId)
         const accessToken = await user.generateAccessToken()
         const refreshToken = await user.generateRefreshToken()
 
         user.refreshToken = refreshToken
-        await user.save({validateBeforeSave: false})
-        
+        await user.save({ validateBeforeSave: false })
+
         return { accessToken, refreshToken }
     } catch (error) {
         throw new ApiError(500, "Something went wrong while generating access & refresh token.")
@@ -24,13 +24,13 @@ const generateAccessAndRefreshToken = async(userId) => {
 
 }
 
-const registerUser = asyncHandler( async(req, res) => {
+const registerUser = asyncHandler(async (req, res) => {
 
     const { name, email, password, role } = req.body;
-    
-    if(
-        [name, email, password ].some((field) => field?.trim() === "")
-    ){
+
+    if (
+        [name, email, password].some((field) => field?.trim() === "")
+    ) {
         throw new ApiError(400, "All fields are required.")
     }
 
@@ -38,7 +38,7 @@ const registerUser = asyncHandler( async(req, res) => {
         $or: [{ name }, { email }]
     })
 
-    if(existedUSer){
+    if (existedUSer) {
         throw new ApiError(409, "USer with this email or name already exists.")
     }
 
@@ -46,45 +46,45 @@ const registerUser = asyncHandler( async(req, res) => {
         name,
         email,
         password,
-        role
+        role: "learner" // Force role to learner
     })
 
     const createdUser = await User.findById(user._id).select("-password")
 
-    if(!createdUser){
+    if (!createdUser) {
         throw new ApiError(500, "Something went wrong while registering the user.")
     }
 
     return res
-      .status(201)
-      .json(new ApiResponse(201, createdUser, "User registered successfully."))
+        .status(201)
+        .json(new ApiResponse(201, createdUser, "User registered successfully."))
 })
 
-const loginUSer = asyncHandler( async(req, res) =>{
-    
+const loginUSer = asyncHandler(async (req, res) => {
+
     const { name, email, password } = req.body
 
-    if(!(name || email)){
+    if (!(name || email)) {
         throw new ApiError(400, "name or email is required.")
     }
-    if(!password){
+    if (!password) {
         throw new ApiError(400, "password is required.")
     }
     const user = await User.findOne({
-        $or: [{name},{email}]
+        $or: [{ name }, { email }]
     })
 
-    if(!user){
+    if (!user) {
         throw new ApiError(404, "User not found.")
     }
 
     const isPasswordCorrect = await user.passwordCompare(password)
-    if(!isPasswordCorrect){
+    if (!isPasswordCorrect) {
         throw new ApiError(401, "Invalid user crendtials")
     }
     const loggedInUser = await User.findById(user._id).select("-password")
 
-    const { accessToken , refreshToken } = await generateAccessAndRefreshToken(user._id)
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id)
 
     const options = {
         httpOnly: true,
@@ -93,21 +93,21 @@ const loginUSer = asyncHandler( async(req, res) =>{
     }
 
     return res
-      .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", refreshToken, options)
-      .json( new ApiResponse(
-        200,
-        {
-            user : loggedInUser,
-            accessToken,
-            refreshToken
-        },
-        "User logged in successfully!"
-      ))
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(new ApiResponse(
+            200,
+            {
+                user: loggedInUser,
+                accessToken,
+                refreshToken
+            },
+            "User logged in successfully!"
+        ))
 })
 
-const logoutUser = asyncHandler( async(req, res) => {
+const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
@@ -124,60 +124,142 @@ const logoutUser = asyncHandler( async(req, res) => {
         httpOnly: true,
         secure: true
     }
-    
+
     return res
-      .status(200)
-      .clearCookie("accessToken", options)
-      .clearCookie("refreshToken", options)
-      .json(new ApiResponse(
-        200,
-        {},
-        "User logged out."
-      ))
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new ApiResponse(
+            200,
+            {},
+            "User logged out."
+        ))
 })
 
-const refreshAccessAndRefreshToken = asyncHandler(async(req, res)=>{
+const refreshAccessAndRefreshToken = asyncHandler(async (req, res) => {
 
     const incomingRefreshToken = req.cookies.refreshToken
-    if(!incomingRefreshToken){
-        throw new ApiError(401,"Unauthorized request.")
+    if (!incomingRefreshToken) {
+        throw new ApiError(401, "Unauthorized request.")
     }
-    
+
     const decodedToken = jwt.verify(
         incomingRefreshToken,
         process.env.REFRESH_TOKEN_SECRET
     )
 
     const user = await User.findById(decodedToken._id)
-    if(!user){
-        throw new ApiError(401,"Invalid refresh token.")
+    if (!user) {
+        throw new ApiError(401, "Invalid refresh token.")
     }
-    if(incomingRefreshToken !== user?.refreshToken){
-        throw new ApiError(401,"Refresh token is expired or user.")
+    if (incomingRefreshToken !== user?.refreshToken) {
+        throw new ApiError(401, "Refresh token is expired or user.")
     }
 
     const options = {
-        httpOnly:true,
+        httpOnly: true,
         secure: true
     }
 
     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshToken(user._id)
     return res
-     .status(200)
-     .cookie("accessToken", newAccessToken, options)
-     .cookie("refreshToken", newRefreshToken, options)
-     .json(new ApiResponse(
-        200,
-        { accessToken: newAccessTokenc, refreshToken: newRefreshToken},
-        "Access Token and Refresh Token refreshed."
-     ))
+        .status(200)
+        .cookie("accessToken", newAccessToken, options)
+        .cookie("refreshToken", newRefreshToken, options)
+        .json(new ApiResponse(
+            200,
+            { accessToken: newAccessToken, refreshToken: newRefreshToken },
+            "Access Token and Refresh Token refreshed."
+        ))
 })
 
 
+
+const getAllStudents = asyncHandler(async (req, res) => {
+    const students = await User.find({ role: "learner" }).select("-password");
+
+    return res.status(200).json(
+        new ApiResponse(200, students, "Students fetched successfully.")
+    );
+});
+
+const getAllMentors = asyncHandler(async (req, res) => {
+    const mentors = await User.find({ role: "mentor" }).select("-password");
+
+    return res.status(200).json(
+        new ApiResponse(200, mentors, "Mentors fetched successfully.")
+    );
+});
+
+const applyForMentor = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (user.role === 'mentor' || user.role === 'admin') {
+        throw new ApiError(400, "You already have elevated privileges.");
+    }
+
+    if (user.mentorApplicationStatus === 'pending') {
+        throw new ApiError(400, "Your application is already pending.");
+    }
+
+    user.mentorApplicationStatus = 'pending';
+    await user.save({ validateBeforeSave: false });
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Mentor application submitted successfully.")
+    );
+});
+
+const getMentorApplications = asyncHandler(async (req, res) => {
+    const applications = await User.find({ mentorApplicationStatus: 'pending' }).select("-password -refreshToken");
+
+    return res.status(200).json(
+        new ApiResponse(200, applications, "Mentor applications fetched successfully.")
+    );
+});
+
+const approveMentorApplication = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User not found.");
+    }
+
+    user.role = 'mentor';
+    user.mentorApplicationStatus = 'approved';
+    await user.save({ validateBeforeSave: false });
+
+    return res.status(200).json(
+        new ApiResponse(200, user, "Mentor application approved successfully.")
+    );
+});
+
+const rejectMentorApplication = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User not found.");
+    }
+
+    user.mentorApplicationStatus = 'rejected';
+    await user.save({ validateBeforeSave: false });
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Mentor application rejected.")
+    );
+});
 
 export {
     registerUser,
     loginUSer,
     logoutUser,
-    refreshAccessAndRefreshToken
+    refreshAccessAndRefreshToken,
+    getAllStudents,
+    getAllMentors,
+    applyForMentor,
+    getMentorApplications,
+    approveMentorApplication,
+    rejectMentorApplication
 }

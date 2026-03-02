@@ -6,28 +6,28 @@ import { Task } from "../models/task.js";
 import { Module } from "../models/module.js";
 import { Track } from "../models/track.js";
 
-const createTask = asyncHandler( async(req, res) => {
+const createTask = asyncHandler(async (req, res) => {
     const { moduleId } = req.params
-    if(!moduleId){
+    if (!moduleId) {
         throw new ApiError(400, "ModuleID is required")
     }
-    const { question, taskType, rubric, maxAttempts, isPublished, order  } = req.body
-    if(!question || question.trim() === ""){
+    const { question, taskType, rubric, maxAttempts, isPublished, order } = req.body
+    if (!question || question.trim() === "") {
         throw new ApiError(400, "Question is required.")
     }
 
     const module = await Module.findById(moduleId)
-    if(!module){
+    if (!module) {
         throw new ApiError(404, "Module not found.")
     }
 
     const track = await Track.findById(module.track)
-    if(!track){
+    if (!track) {
         throw new ApiError(404, "Track not found.")
     }
 
-    if(!track.createdBy.equals(req.user._id) &&
-          req.user.role !== "admin"){
+    if (!track.createdBy.equals(req.user._id) &&
+        req.user.role !== "admin") {
         throw new ApiError(403, "You are not allowed to create task.")
     }
 
@@ -41,18 +41,35 @@ const createTask = asyncHandler( async(req, res) => {
         order
     })
 
-    return res 
-      .status(201)
-      .json(new ApiResponse(
-        201,
-        task,
-        "Task created successfully."
-      ))
+    return res
+        .status(201)
+        .json(new ApiResponse(
+            201,
+            task,
+            "Task created successfully."
+        ))
 
 })
 
+const getTasksByModule = asyncHandler(async (req, res) => {
+    const { moduleId } = req.params;
+    if (!moduleId) {
+        throw new ApiError(400, "ModuleID is required");
+    }
 
+    const module = await Module.findById(moduleId);
+    if (!module) {
+        throw new ApiError(404, "Module not found.");
+    }
+
+    const tasks = await Task.find({ module: moduleId, isPublished: true }).sort({ order: 1 });
+
+    return res.status(200).json(
+        new ApiResponse(200, tasks, "Tasks fetched successfully.")
+    );
+});
 
 export {
     createTask,
+    getTasksByModule,
 }

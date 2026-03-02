@@ -1,10 +1,11 @@
 import { Router } from "express";
 
-import { 
-    createTrack,
-    getPublishedTracks,
-    getMyTracks,
-    togglePublishTrack,
+import {
+   createTrack,
+   getPublishedTracks,
+   getMyTracks,
+   togglePublishTrack,
+   getEnrolledTracks,
 } from "../controllers/track.controller.js";
 
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -18,6 +19,9 @@ router.route("/")
 
 router.route("/my")
    .get(verifyJWT, authorizeRoles("mentor", "admin"), getMyTracks)
+
+router.route("/enrolled")
+   .get(verifyJWT, authorizeRoles("learner"), getEnrolledTracks)
 
 router.route("/toggle/publish/:trackId")
    .patch(verifyJWT, authorizeRoles("mentor", "admin"), togglePublishTrack)

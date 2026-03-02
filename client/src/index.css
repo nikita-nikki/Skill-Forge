@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #FCF9EA;
+  --color-primary: #BADFDB;
+  --color-secondary: #FFA4A4;
+  --color-tertiary: #FFBDBD;
+}
+
+@layer base {
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: #1e293b;
+    /* slate-800 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  img,
+  video,
+  svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  button,
+  [role="button"] {
+    min-height: 44px;
+    /* WCAG touch target */
+    cursor: pointer;
+  }
+
+  input,
+  textarea,
+  select {
+    max-width: 100%;
+    font-size: 1rem;
+    /* Prevent iOS zoom on focus */
+  }
+}
