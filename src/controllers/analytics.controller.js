@@ -178,6 +178,7 @@ const getMyPerformance = asyncHandler(async (req, res) => {
                     $push: {
                         taskId: "$taskInfo._id",
                         taskQuestion: "$taskInfo.question",
+                        taskRubric: "$taskInfo.rubric",
                         score: "$evaluation.score",
                         evaluatedAt: "$evaluation.createdAt"
                     }

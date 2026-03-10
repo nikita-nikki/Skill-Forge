@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api/axios';
-import { Users, BookOpen, BarChart3, UserCheck } from 'lucide-react';
+import { Users, BookOpen, BarChart3, UserCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const AdminDashboard = ({ tab }) => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [toast, setToast] = useState(null);
 
     const activeTab = tab || 'students';
+
+    const showToast = (msg, type = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3500);
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -43,9 +49,9 @@ const AdminDashboard = ({ tab }) => {
         try {
             await api.post(`/users/applications/${userId}/${action}`);
             setData(prev => prev.filter(app => app._id !== userId));
-            alert(`Application ${action}ed successfully!`);
+            showToast(`Application ${action}ed successfully!`);
         } catch (err) {
-            alert(err.response?.data?.message || 'Action failed');
+            showToast(err.response?.data?.message || 'Action failed', 'error');
         }
     };
 
@@ -79,11 +85,11 @@ const AdminDashboard = ({ tab }) => {
                         <div key={user._id} className="p-4 sm:p-6 flex items-center justify-between hover:bg-slate-50 transition-colors">
                             <div className="flex items-center gap-3 min-w-0">
                                 <div className="h-10 w-10 shrink-0 rounded-full bg-primary/40 flex items-center justify-center text-teal-800 font-bold">
-                                    {user.name.charAt(0).toUpperCase()}
+                                    {(user.name || '?').charAt(0).toUpperCase()}
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="font-semibold text-slate-800 truncate">{user.name}</p>
-                                    <p className="text-sm text-slate-500 truncate">{user.email}</p>
+                                    <p className="font-semibold text-slate-800 truncate">{user.name || 'Unknown'}</p>
+                                    <p className="text-sm text-slate-500 truncate">{user.email || 'No email'}</p>
                                 </div>
                             </div>
                             <span className="shrink-0 ml-4 px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full border border-green-200">
@@ -170,29 +176,33 @@ const AdminDashboard = ({ tab }) => {
             </div>
             <div className="divide-y divide-slate-100">
                 {data.length === 0 ? (
-                    <p className="p-6 text-slate-500 text-center">No pending applications found.</p>
+                    <div className="flex flex-col items-center justify-center p-12 text-center">
+                        <UserCheck className="h-12 w-12 text-slate-300 mb-3" />
+                        <p className="text-slate-500 font-medium">No pending mentor applications.</p>
+                        <p className="text-slate-400 text-sm mt-1">When learners apply to become mentors, they&apos;ll appear here.</p>
+                    </div>
                 ) : (
                     data.map(app => (
                         <div key={app._id} className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:bg-slate-50 transition-colors">
-                            <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
                                 <div className="h-10 w-10 shrink-0 rounded-full bg-secondary/20 flex items-center justify-center text-secondary-dark font-bold">
-                                    {app.name.charAt(0).toUpperCase()}
+                                    {(app.name || '?').charAt(0).toUpperCase()}
                                 </div>
-                                <div className="min-w-0">
-                                    <p className="font-semibold text-slate-800 truncate">{app.name}</p>
-                                    <p className="text-sm text-slate-500 truncate">{app.email}</p>
+                                <div className="min-w-0 flex-1">
+                                    <p className="font-semibold text-slate-800 truncate">{app.name || 'Unknown'}</p>
+                                    <p className="text-sm text-slate-500 truncate">{app.email || 'No email'}</p>
                                 </div>
                             </div>
-                            <div className="flex gap-3 shrink-0">
+                            <div className="flex gap-3 shrink-0 w-full sm:w-auto mt-1 sm:mt-0">
                                 <button
                                     onClick={() => handleAction(app._id, 'approve')}
-                                    className="flex-1 sm:flex-none px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-md transition-colors shadow-sm"
+                                    className="flex-1 sm:flex-none px-4 py-2.5 text-sm font-bold rounded-lg border transition-all bg-green-50 text-green-700 border-green-200 hover:bg-green-500 hover:text-white"
                                 >
                                     Approve
                                 </button>
                                 <button
                                     onClick={() => handleAction(app._id, 'reject')}
-                                    className="flex-1 sm:flex-none px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-md transition-colors shadow-sm"
+                                    className="flex-1 sm:flex-none px-4 py-2.5 text-sm font-bold rounded-lg border transition-all bg-red-50 text-red-600 border-red-200 hover:bg-red-500 hover:text-white"
                                 >
                                     Reject
                                 </button>
@@ -205,7 +215,16 @@ const AdminDashboard = ({ tab }) => {
     );
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto relative">
+            {toast && (
+                <div className={`fixed top-20 right-5 z-50 flex items-center gap-2 px-5 py-3 rounded-xl shadow-lg text-sm font-semibold transition-all
+                    ${toast.type === 'error'
+                        ? 'bg-red-50 text-red-700 border border-red-200'
+                        : 'bg-green-50 text-green-700 border border-green-200'}`}>
+                    {toast.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+                    {toast.msg}
+                </div>
+            )}
             {activeTab === 'students' || activeTab === 'mentors' ? renderStudentsOrMentors() : null}
             {activeTab === 'tracks' ? renderTracks() : null}
             {activeTab === 'performance' ? renderPerformance() : null}

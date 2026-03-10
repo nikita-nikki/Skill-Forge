@@ -69,7 +69,45 @@ const getTasksByModule = asyncHandler(async (req, res) => {
     );
 });
 
+const updateTask = asyncHandler(async (req, res) => {
+    const { taskId } = req.params;
+    if (!taskId || !mongoose.Types.ObjectId.isValid(taskId)) {
+        throw new ApiError(400, "Valid TaskID is required.");
+    }
+
+    const { question, taskType, rubric, maxAttempts, isPublished, order } = req.body;
+
+    const task = await Task.findById(taskId);
+    if (!task) {
+        throw new ApiError(404, "Task not found.");
+    }
+
+    const module = await Module.findById(task.module);
+    if (!module) {
+        throw new ApiError(404, "Module not found.");
+    }
+
+    const track = await Track.findById(module.track);
+    if (!track || (!track.createdBy.equals(req.user._id) && req.user.role !== "admin")) {
+        throw new ApiError(403, "You are not allowed to update this task.");
+    }
+
+    if (question !== undefined) task.question = question;
+    if (taskType !== undefined) task.taskType = taskType;
+    if (rubric !== undefined) task.rubric = rubric;
+    if (maxAttempts !== undefined) task.maxAttempts = maxAttempts;
+    if (isPublished !== undefined) task.isPublished = isPublished;
+    if (order !== undefined) task.order = order;
+
+    await task.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, task, "Task updated successfully.")
+    );
+});
+
 export {
     createTask,
     getTasksByModule,
+    updateTask
 }

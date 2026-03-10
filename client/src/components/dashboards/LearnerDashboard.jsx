@@ -154,8 +154,8 @@ const LearnerDashboard = ({ tab }) => {
                                 <p className="text-3xl font-bold text-slate-800">{overall.totalEvaluated}</p>
                             </div>
                             <div className="p-5 bg-secondary/20 rounded-lg text-center border border-secondary/40">
-                                <p className="text-slate-600 text-sm font-semibold mb-1">Average Score</p>
-                                <p className="text-3xl font-bold text-slate-800">{overall.averageScore} / 10</p>
+                                <p className="text-slate-600 text-sm font-semibold mb-1">Avg Points</p>
+                                <p className="text-3xl font-bold text-slate-800">{overall.averageScore}</p>
                             </div>
                         </div>
 
@@ -170,7 +170,7 @@ const LearnerDashboard = ({ tab }) => {
                                         <div className="bg-slate-50 px-5 py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 border-b border-slate-100">
                                             <h4 className="font-bold text-slate-800">{track.trackTitle}</h4>
                                             <div className="bg-secondary/20 text-secondary-dark px-3 py-1 rounded-full text-sm font-semibold self-start sm:self-auto">
-                                                Avg: {track.avgScore.toFixed(1)} / 10
+                                                Avg Pts: {track.avgScore.toFixed(1)}
                                             </div>
                                         </div>
                                         <div className="overflow-x-auto">
@@ -183,19 +183,25 @@ const LearnerDashboard = ({ tab }) => {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100">
-                                                    {track.tasks.map((task, idx) => (
-                                                        <tr key={idx} className="hover:bg-slate-50/30 transition-colors">
-                                                            <td className="px-5 py-4 text-slate-700 font-medium">{task.taskQuestion}</td>
-                                                            <td className="px-5 py-4">
-                                                                <span className={`px-2 py-1 rounded font-bold ${task.score >= 8 ? 'text-green-600' : task.score >= 5 ? 'text-blue-600' : 'text-orange-600'}`}>
-                                                                    {task.score} / 10
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-5 py-4 text-slate-500 hidden sm:table-cell">
-                                                                {new Date(task.evaluatedAt).toLocaleDateString()}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
+                                                    {track.tasks.map((task, idx) => {
+                                                        const maxScore = task.taskRubric
+                                                            ? (task.taskRubric.clarity || 0) + (task.taskRubric.correctness || 0) + (task.taskRubric.examples || 0)
+                                                            : 15;
+                                                        const scoreRatio = task.score / maxScore;
+                                                        return (
+                                                            <tr key={idx} className="hover:bg-slate-50/30 transition-colors">
+                                                                <td className="px-5 py-4 text-slate-700 font-medium">{task.taskQuestion}</td>
+                                                                <td className="px-5 py-4">
+                                                                    <span className={`px-2 py-1 rounded font-bold ${scoreRatio >= 0.8 ? 'text-green-600' : scoreRatio >= 0.5 ? 'text-blue-600' : 'text-orange-600'}`}>
+                                                                        {task.score} / {maxScore}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-5 py-4 text-slate-500 hidden sm:table-cell">
+                                                                    {new Date(task.evaluatedAt).toLocaleDateString()}
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
                                                 </tbody>
                                             </table>
                                         </div>

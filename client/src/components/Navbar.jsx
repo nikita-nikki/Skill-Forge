@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, BookOpen, Users, BarChart3, List, UserCheck, Menu, X } from 'lucide-react';
+import { LogOut, BookOpen, Users, BarChart3, List, UserCheck, Menu, X, ClipboardCheck } from 'lucide-react';
 import api from '../api/axios';
 
 const Navbar = () => {
@@ -49,6 +49,7 @@ const Navbar = () => {
             return [
                 { to: '/dashboard?tab=my-tracks', icon: <List size={16} />, label: 'My Tracks' },
                 { to: '/dashboard?tab=new-track', icon: <BookOpen size={16} />, label: 'New Track' },
+                { to: '/dashboard?tab=evaluations', icon: <ClipboardCheck size={16} />, label: 'Evaluations' },
                 { to: '/dashboard?tab=performance', icon: <BarChart3 size={16} />, label: 'Performance' },
             ];
         }
@@ -62,7 +63,7 @@ const Navbar = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-14">
                     {/* Logo */}
-                    <Link to="/" className="flex items-center gap-2 text-slate-800 font-bold text-xl hover:opacity-80 transition-opacity shrink-0">
+                    <Link to={role ? '/dashboard' : '/'} className="flex items-center gap-2 text-slate-800 font-bold text-xl hover:opacity-80 transition-opacity shrink-0">
                         <BookOpen className="text-secondary" size={22} />
                         <span>SkillForge</span>
                     </Link>
